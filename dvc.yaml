@@ -1,0 +1,28 @@
+stages:
+  data_prep:
+    cmd: python src/data_prep.py
+    deps:
+      - src/data_prep.py
+      - data/raw/creditcard.csv
+      - params.yaml
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - data/models/scaler.joblib
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/processed/train.csv
+      - params.yaml
+    outs:
+      - data/models/rf_model.joblib
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - data/processed/test.csv
+      - data/models/rf_model.joblib
+      - params.yaml

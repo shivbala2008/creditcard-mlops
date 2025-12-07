@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+dvc
+mlflow
+fastapi
+uvicorn
+pydantic
+joblib
+python-dotenv
+prometheus-client
+requests
+pytest

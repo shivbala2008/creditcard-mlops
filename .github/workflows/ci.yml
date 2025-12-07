@@ -1,0 +1,105 @@
+name: CI – Credit Card Fraud MLOps
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # ----------------------------- #
+  # 1. Build & Test (Python)      #
+  # ----------------------------- #
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: checkout code
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Step 3: install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # (Optional) Step 4: run DVC pipeline
+      # NOTE: This will only work if your DVC remote is configured
+      # and the data is accessible from GitHub Actions.
+      - name: Run DVC pipeline (optional)
+        if: ${{ false }}   # change to true or remove this line when ready
+        run: |
+          dvc repro
+
+      # Step 5: run tests
+      - name: Run unit tests with pytest
+        run: |
+          pytest -vv
+
+
+  # --------------------------------------------- #
+  # 2. Build & Push Docker Image (after tests)    #
+  # --------------------------------------------- #
+  docker-build-and-push:
+    needs: build-and-test        # only run if tests pass
+    runs-on: ubuntu-latest
+
+    # Only build/push on main branch (avoid for every PR)
+    if: github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      IMAGE_NAME: creditcard-api
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ---------- OPTION A: push to GitHub Container Registry (GHCR) ----------
+      # Image will look like: ghcr.io/<owner>/creditcard-api:latest
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+
+      # ---------- OPTION B (commented): push to Docker Hub ----------
+      # To use Docker Hub instead of GHCR:
+      # 1. Create DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets in your repo
+      # 2. Uncomment the steps below and remove the GHCR steps above
+
+      # - name: Log in to Docker Hub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+      #
+      # - name: Build and push Docker image to Docker Hub
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     file: service/Dockerfile
+      #     push: true
+      #     tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest

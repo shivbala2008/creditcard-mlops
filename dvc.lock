@@ -1,0 +1,69 @@
+schema: '2.0'
+stages:
+  data_prep:
+    cmd: python src/data_prep.py
+    deps:
+    - path: data/raw/creditcard.csv
+      hash: md5
+      md5: e90efcb83d69faf99fcab8b0255024de
+      size: 150828752
+    - path: params.yaml
+      hash: md5
+      md5: 93a793ac9690cde9fc7c8abf8d7b576f
+      size: 440
+    - path: src/data_prep.py
+      hash: md5
+      md5: 38f56c364ab1cb2d4f33cf470fd1c989
+      size: 1622
+    outs:
+    - path: data/models/scaler.joblib
+      hash: md5
+      md5: eaac27faffc5469f00cb392ef4f0daf5
+      size: 935
+    - path: data/processed/test.csv
+      hash: md5
+      md5: d763c5fd04bf5636a18ed105fac1fd5f
+      size: 31690612
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 4b0ddfece2d59b95b333a58059852b5b
+      size: 126767200
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 4b0ddfece2d59b95b333a58059852b5b
+      size: 126767200
+    - path: params.yaml
+      hash: md5
+      md5: 93a793ac9690cde9fc7c8abf8d7b576f
+      size: 440
+    - path: src/train.py
+      hash: md5
+      md5: 22967e5d45da2007c84b0ac784089fab
+      size: 2012
+    outs:
+    - path: data/models/rf_model.joblib
+      hash: md5
+      md5: 569d1c6b76e4235a4d7bbaf3654c4479
+      size: 2290169
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/models/rf_model.joblib
+      hash: md5
+      md5: 569d1c6b76e4235a4d7bbaf3654c4479
+      size: 2290169
+    - path: data/processed/test.csv
+      hash: md5
+      md5: d763c5fd04bf5636a18ed105fac1fd5f
+      size: 31690612
+    - path: params.yaml
+      hash: md5
+      md5: 93a793ac9690cde9fc7c8abf8d7b576f
+      size: 440
+    - path: src/evaluate.py
+      hash: md5
+      md5: 539a119efc46740a446760b0cc545b91
+      size: 1270
